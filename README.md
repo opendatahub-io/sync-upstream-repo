@@ -22,6 +22,11 @@ The changes in this fork are:
 name: Sync Upstream
 
 env:
+  # Required, the mode the action will run on. There only two mode supported:
+  # "branch-to-branch"  : all the commits from the upstream branch will be synched into the downstream branch using the defined merge strategy
+  # "release-following" : detects if a newer branch matching the pattern defined in UPSTREAM_BRANCH is created and renames the current DOWNSTREAM_BRANCH
+  #                       to the previous branch name and continues to synch the commits from the new upstream branch to DOWNSTREAM_BRANCH
+  MODE: branch-to-branch
   # Required, URL to upstream repository (fork base)
   UPSTREAM_REPO_URL:  https://github.com/openvinotoolkit/model_server.git
   # Required, the name of the upstream branch to pull changes from
@@ -31,14 +36,6 @@ env:
   # Optional, downstream repository branch name. If not provided it will default to
   # the value of UPSTREAM_BRANCH
   DOWNSTREAM_BRANCH: main
-  # Optional, fetch arguments
-  FETCH_ARGS: ""
-  # Optional, rebase arguments
-  REBASE_ARGS: ""
-  # Optional, push arguments
-  PUSH_ARGS: ""
-  # Optional, merge arguments
-  MERGE_ARGS: ""
   # Optional, create log commits in the branch. The values allowed are "true" or "false", with 
   # "false being the default"
   SPWAN_LOGS: "true"
@@ -46,7 +43,6 @@ env:
   # being the default 
   MERGE_STRATEGY: "rebase"
 
- 
 # This runs every day on 1801 UTC
 on:
   schedule:
@@ -59,8 +55,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: GitHub Sync to Upstream Repository
-        uses: z103db/sync-upstream-repo@v2.0.0
+        uses: z103db/sync-upstream-repo@v2.1.0
         with: 
+          mode: ${{ env.MODE }}
           upstream_repo_url: ${{ env.UPSTREAM_REPO_URL }}
           upstream_branch: ${{ env.UPSTREAM_BRANCH }}
           downstream_repo_url: ${{ env.DOwNSTREAM_REPO_URL }}
@@ -68,11 +65,7 @@ jobs:
           # Defaults to `secrets.GITHUB_TOKEN` if not specified
           token: ${{ secret.GHA_TOKEN }}
           merge_strategy: ${{ env.MERGE_STRATEGY}}
-          spawn_logs: ${{ env.SPAWN_ARGS }}
-          fetch_args: ${{ env.FETCH_ARGS }}
-          rebase_args: ${{ env.REBASE_ARGS }}
-          push_args: ${{ env.PUSH_ARGS }}
-          merge_args: ${{ env.MERGE_ARGS}}
+          spawn_logs: ${{ env.SPAWN_ARGS }} 
 ```
 
 This action syncs the downstream repo with the upstream repo every day at the time specified in the schedule. The synch process rebases the content of the specified branch in the downstream repo with the content of the upstream repo and branch. You can pass additional arguments to the rebase commands using the REBASE_ARGS  
